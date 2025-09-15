@@ -76,7 +76,9 @@ logger.info(f'FUNCTION_INPUT_SCHEMA_ARN_TAG_KEY: {FUNCTION_INPUT_SCHEMA_ARN_TAG_
 #         # region_name=AWS_REGION
 #     )
 # else:
-session = boto3.Session(region_name=AWS_REGION)
+logger.info(f'{boto3.Session().client("sts").get_caller_identity()} ---------------------------')
+logger.info(f'Using AWS profile---------------: {AWS_PROFILE}')
+session = boto3.Session()
 
 lambda_client = session.client('lambda')
 schemas_client = session.client('schemas')
