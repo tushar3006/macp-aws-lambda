@@ -19,7 +19,6 @@ import json
 import logging
 import os
 import re
-from dotenv import load_dotenv
 from mcp.server.fastmcp import Context, FastMCP
 from typing import Optional
 
@@ -31,10 +30,10 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-AWS_PROFILE = os.environ.get('AWS_PROFILE', 'default')
+AWS_PROFILE = os.environ.get('AWS_PROFILE', 'root')
 logger.info(f'AWS_PROFILE: {AWS_PROFILE}')
 
-AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
+AWS_REGION = os.environ.get('AWS_REGION', 'us-west-1')
 logger.info(f'AWS_REGION: {AWS_REGION}')
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
