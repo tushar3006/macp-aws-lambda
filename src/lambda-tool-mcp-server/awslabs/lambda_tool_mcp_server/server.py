@@ -19,9 +19,13 @@ import json
 import logging
 import os
 import re
+from dotenv import load_dotenv
 from mcp.server.fastmcp import Context, FastMCP
 from typing import Optional
 
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -32,6 +36,10 @@ logger.info(f'AWS_PROFILE: {AWS_PROFILE}')
 
 AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
 logger.info(f'AWS_REGION: {AWS_REGION}')
+
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_SESSION_TOKEN = os.environ.get('AWS_SESSION_TOKEN')  # Optional for temporary credentials
 
 FUNCTION_PREFIX = os.environ.get('FUNCTION_PREFIX', '')
 logger.info(f'FUNCTION_PREFIX: {FUNCTION_PREFIX}')
@@ -53,7 +61,23 @@ FUNCTION_INPUT_SCHEMA_ARN_TAG_KEY = os.environ.get('FUNCTION_INPUT_SCHEMA_ARN_TA
 logger.info(f'FUNCTION_INPUT_SCHEMA_ARN_TAG_KEY: {FUNCTION_INPUT_SCHEMA_ARN_TAG_KEY}')
 
 # Initialize AWS clients
-session = boto3.Session(profile_name=AWS_PROFILE, region_name=AWS_REGION)
+# Use AWS keys from environment if available, otherwise fall back to profile
+
+logger.info(f'{AWS_ACCESS_KEY_ID} ----------- {AWS_SECRET_ACCESS_KEY}')
+if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+    logger.info('Using AWS credentials from environment variables')
+    session = boto3.Session(
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_session_token=AWS_SESSION_TOKEN,
+        region_name=AWS_REGION
+    )
+else:
+    logger.info(f'Using AWS profile---------------: {AWS_PROFILE}')
+    session = boto3.Session(profile_name=AWS_PROFILE, region_name=AWS_REGION)
+
+
+
 lambda_client = session.client('lambda')
 schemas_client = session.client('schemas')
 
@@ -268,10 +292,25 @@ def register_lambda_functions():
     """Register Lambda functions as individual tools."""
     try:
         logger.info('Registering Lambda functions as individual tools...')
-        functions = lambda_client.list_functions()
-
-        # Get all functions
-        all_functions = functions['Functions']
+        
+        # Get all functions with pagination
+        all_functions = []
+        next_marker = None
+        
+        while True:
+            # Prepare the list_functions call with optional marker for pagination
+            list_params = {}
+            if next_marker:
+                list_params['Marker'] = next_marker
+            
+            functions_response = lambda_client.list_functions(**list_params)
+            all_functions.extend(functions_response['Functions'])
+            
+            # Check if there are more functions to fetch
+            next_marker = functions_response.get('NextMarker')
+            if not next_marker:
+                break
+                
         logger.info(f'Total Lambda functions found: {len(all_functions)}')
 
         # First filter by function name if prefix or list is set
