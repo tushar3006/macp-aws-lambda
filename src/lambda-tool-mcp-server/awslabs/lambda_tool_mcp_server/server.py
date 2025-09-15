@@ -64,21 +64,19 @@ logger.info(f'FUNCTION_INPUT_SCHEMA_ARN_TAG_KEY: {FUNCTION_INPUT_SCHEMA_ARN_TAG_
 # Use AWS keys from environment if available, otherwise fall back to profile
 
 
+if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+    logger.info('Using AWS credentials from environment variables')
+    session = boto3.Session(
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_session_token=AWS_SESSION_TOKEN,
+        region_name=AWS_REGION
+    )
+else:
+    logger.info(f'Using AWS profile---------------: {AWS_PROFILE}')
+    session = boto3.Session(profile_name=AWS_PROFILE, region_name=AWS_REGION)
 
-# logger.info(f'{AWS_ACCESS_KEY_ID} ----------- {AWS_SECRET_ACCESS_KEY}')
-# if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
-#     logger.info('Using AWS credentials from environment variables')
-#     session = boto3.Session(
-#         session.get_credentials()
-#         # aws_access_key_id=AWS_ACCESS_KEY_ID,
-#         # aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-#         # aws_session_token=AWS_SESSION_TOKEN,
-#         # region_name=AWS_REGION
-#     )
-# else:
-logger.info(f'{boto3.Session().client("sts").get_caller_identity()} ---------------------------')
-logger.info(f'Using AWS profile---------------: {AWS_PROFILE}')
-session = boto3.Session()
+
 
 lambda_client = session.client('lambda')
 schemas_client = session.client('schemas')
